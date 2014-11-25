@@ -5,22 +5,20 @@ import java.io.IOException;
  */
 public class Main {
     static Kattio io;
-    static short[] tour;
-    static double[][] coordinates;
 
     public static void main(String[] args) throws IOException {
         io = new Kattio(System.in, System.out);
         int pointsCount = io.getInt();
-        tour = new short[pointsCount];
-        coordinates = new double[pointsCount][2];
+        short[] tour = new short[pointsCount];
+        double[][] coordinates = new double[pointsCount][2];
         for (int i = 0; i < pointsCount; i++) {
-            double coord1 = io.getDouble();
-            double coord2 = io.getDouble();
-            coordinates[i][0] = coord1;
-            coordinates[i][1] = coord2;
+            coordinates[i][0] = io.getDouble();
+            coordinates[i][1] = io.getDouble();
         }
-        double distance = distance(coordinates[0], coordinates[1]);
-        System.out.println(distance);
+        short[] greedyTour = greedyTour(tour, coordinates);
+        for (short i : greedyTour) {
+            System.out.println(i);
+        }
     }
 
     static double distance(double[] coordinate1, double[] coordinate2) {
@@ -30,7 +28,24 @@ public class Main {
         return distance;
     }
 
-    static void greedyTour() {
 
+    static short[] greedyTour(short[] tour, double[][]coordinates) {
+        boolean[] used = new boolean[tour.length];
+        tour[0] = 0;
+        used[0] = true;
+        for (int i = 1; i < tour.length; i++) {
+            short best = -1;
+            double[] prevCoord = coordinates[tour[i-1]];
+            for (short j = 0; j < tour.length; j++) {
+                double[] currCoord = coordinates[j];
+                if (!used[j] && (best == -1 || distance(prevCoord, currCoord) <
+                        distance(prevCoord, coordinates[best]))) {
+                    best = j;
+                }
+            }
+            tour[i] = best;
+            used[best] = true;
+        }
+        return tour;
     }
 }
