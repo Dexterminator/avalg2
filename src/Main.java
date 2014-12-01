@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * Created by dexter on 24/11/14.
@@ -15,45 +16,39 @@ public class Main {
             coordinates[i][0] = io.getDouble();
             coordinates[i][1] = io.getDouble();
         }
-        short[] greedyTour = greedyTour(tour, coordinates);
+        short[] greedyTour = greedyTour(pointsCount, coordinates);
+        /*
         for (short i : greedyTour) {
-            System.out.println(i);
+            io.println(i);
         }
-        System.err.println("Distance: " + tourDistance(tour, coordinates));
-    }
+        */
+        //System.err.println("Distance: " + TwoOpt.tourDistance(greedyTour, coordinates));
 
-    static double distance(double[] coordinate1, double[] coordinate2) {
-        double paren1 = Math.pow(coordinate1[0] - coordinate2[0], 2);
-        double paren2 = Math.pow(coordinate1[1] - coordinate2[1], 2);
-        double distance = Math.sqrt(paren1 + paren2);
-        return distance;
-    }
-
-    static double tourDistance(short[] tour, double[][] coordinates) {
-        double totalDistance = 0;
-        for (int i = 1; i < tour.length; i++) {
-            double[] coordinate1 = coordinates[tour[i-1]];
-            double[] coordinate2 = coordinates[tour[i]];
-            totalDistance += distance(coordinate1, coordinate2);
+        short[] twoOptTour = TwoOpt.twoOpt(greedyTour, coordinates);
+        for (short i : twoOptTour) {
+            io.println(i);
         }
-        double[] coordinate1 = coordinates[tour[0]];
-        double[] coordinate2 = coordinates[tour[tour.length-1]];
-        totalDistance += distance(coordinate1, coordinate2);
-        return totalDistance;
+        io.flush();
+
+        //System.err.println("Distance: " + TwoOpt.tourDistance(twoOptTour, coordinates));
     }
 
-    static short[] greedyTour(short[] tour, double[][]coordinates) {
+    static short[] greedyTour(int length, double[][]coordinates) {
+        short[] tour = new short[length];
         boolean[] used = new boolean[tour.length];
         tour[0] = 0;
         used[0] = true;
         for (int i = 1; i < tour.length; i++) {
             short best = -1;
             double[] prevCoord = coordinates[tour[i-1]];
+            double bestDist = Double.MAX_VALUE;
             for (short j = 0; j < tour.length; j++) {
                 double[] currCoord = coordinates[j];
-                if (!used[j] && (best == -1 || distance(prevCoord, currCoord) <
-                        distance(prevCoord, coordinates[best]))) {
+                double currDist = TwoOpt.distance(prevCoord, currCoord);
+                if (!used[j] && (best == -1 || currDist <
+                        bestDist)) {
                     best = j;
+                    bestDist = currDist;
                 }
             }
             tour[i] = best;
