@@ -19,6 +19,7 @@ public class Main {
         for (short i : greedyTour) {
             System.out.println(i);
         }
+        System.err.println("Distance: " + tourDistance(tour, coordinates));
     }
 
     static double distance(double[] coordinate1, double[] coordinate2) {
@@ -28,6 +29,18 @@ public class Main {
         return distance;
     }
 
+    static double tourDistance(short[] tour, double[][] coordinates) {
+        double totalDistance = 0;
+        for (int i = 1; i < tour.length; i++) {
+            double[] coordinate1 = coordinates[tour[i-1]];
+            double[] coordinate2 = coordinates[tour[i]];
+            totalDistance += distance(coordinate1, coordinate2);
+        }
+        double[] coordinate1 = coordinates[tour[0]];
+        double[] coordinate2 = coordinates[tour[tour.length-1]];
+        totalDistance += distance(coordinate1, coordinate2);
+        return totalDistance;
+    }
 
     static short[] greedyTour(short[] tour, double[][]coordinates) {
         boolean[] used = new boolean[tour.length];
