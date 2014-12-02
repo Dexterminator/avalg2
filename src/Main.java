@@ -9,6 +9,7 @@ public class Main {
     static double[][] distances;
     static int TIME_LIMIT = 1100;
     static long startTime;
+    static boolean DEBUG = true;
 
     public static void main(String[] args) throws IOException {
         startTime = System.currentTimeMillis();
@@ -20,19 +21,22 @@ public class Main {
 
         // Greedy
         short[] greedyTour = greedyTour(pointsCount);
-//        for (short i : greedyTour)
-//            io.println(i);
-//        io.println("Greedy distance: " + tourDistance(greedyTour));
-
-        // Testing
-//        short[] testSwap = twoOptSwap(new short[]{0, 1, 2, 3, 4, 5}, 1, 3);
-//        System.out.println(Arrays.toString(testSwap));
+        if (DEBUG) {
+            for (short i : greedyTour)
+                System.out.println(i);
+            System.out.println("Greedy distance: " + tourDistance(greedyTour));
+            // Testing
+//            short[] testSwap = twoOptSwap(new short[]{0, 1, 2, 3, 4, 5}, 1, 3);
+//            System.out.println(Arrays.toString(testSwap));
+        }
 
         // 2-opt
         short[] twoOptTour = twoOpt(greedyTour);
         for (short i : twoOptTour)
             System.out.println(i);
-//        System.err.println("2-opt distance: " + tourDistance(twoOptTour));
+        if (DEBUG) {
+            System.err.println("2-opt distance: " + tourDistance(twoOptTour));
+        }
     }
 
     static short[] twoOpt(short[] tour) {
@@ -45,10 +49,6 @@ public class Main {
             passTour = twoOptPass(bestTour);
         }
         return bestTour;
-    }
-
-    static boolean timeLimitPassed() {
-        return System.currentTimeMillis() - startTime > TIME_LIMIT;
     }
 
     static short[] twoOptPass(short[] tour) {
@@ -118,7 +118,7 @@ public class Main {
     private static double[][] calculateDistances(int pointsCount, double[][] coordinates) {
         double [][] distances = new double[pointsCount][pointsCount];
         for (int i = 0; i < pointsCount; i++) {
-            for (int j = 0; j <= i; j++) {
+            for (int j = 0; j < i; j++) {
                 distances[i][j] = coordinateDistance(coordinates[i], coordinates[j]);
                 distances[j][i] = distances[i][j];
             }
@@ -140,5 +140,9 @@ public class Main {
             coordinates[i][1] = io.getDouble();
         }
         return coordinates;
+    }
+
+    static boolean timeLimitPassed() {
+        return System.currentTimeMillis() - startTime > TIME_LIMIT;
     }
 }
