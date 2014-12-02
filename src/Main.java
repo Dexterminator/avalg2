@@ -1,5 +1,4 @@
 import java.io.IOException;
-import java.util.Arrays;
 
 /**
  * Created by dexter on 24/11/14.
@@ -7,11 +6,13 @@ import java.util.Arrays;
 public class Main {
     static Kattio io;
     static double[][] distances;
-    static int TIME_LIMIT = 1100;
+    static int TIME_LIMIT = 900;
     static long startTime;
     static boolean DEBUG = false;
 
     public static void main(String[] args) throws IOException {
+        if (args.length > 0)
+            DEBUG = Boolean.parseBoolean(args[0]);
         startTime = System.currentTimeMillis();
         // Setup
         io = new Kattio(System.in, System.out);
@@ -25,9 +26,6 @@ public class Main {
             for (short i : greedyTour)
                 System.out.println(i);
             System.out.println("Greedy distance: " + tourDistance(greedyTour));
-            // Testing
-//            short[] testSwap = twoOptSwap(new short[]{0, 1, 2, 3, 4, 5}, 1, 3);
-//            System.out.println(Arrays.toString(testSwap));
         }
 
         // 2-opt
@@ -40,64 +38,53 @@ public class Main {
     }
 
     static short[] twoOpt(short[] tour) {
-        short[] bestTour = tour;
-        short[] passTour = twoOptPass(bestTour);
-        while (passTour != null) {
+        boolean foundBetterTour = twoOptPass(tour);
+        while (foundBetterTour) {
             if (timeLimitPassed())
-                return bestTour;
-            bestTour = passTour;
-            passTour = twoOptPass(bestTour);
+                return tour;
+            foundBetterTour = twoOptPass(tour);
         }
-        return bestTour;
+        return tour;
     }
 
-    static short[] twoOptPass(short[] tour) {
-        //double bestDistance = tourDistance(tour);
-        //double newDistance;
+    static boolean twoOptPass(short[] tour) {
         int n = tour.length;
         for (int i = 0; i < tour.length - 1; i++) {
             for (int k = i + 1; k < tour.length; k++) {
                 if (timeLimitPassed())
-                    return null;
+                    return false;
 
-                if(i == 0 && (k+1) == n)
+                if (i == 0 && (k + 1) == n)
                     continue;
                 int j_minus;
                 int j = tour[i];
-                if(i == 0)
-                    j_minus = tour[n-1];
+                if (i == 0)
+                    j_minus = tour[n - 1];
                 else
-                    j_minus = tour[i-1];
+                    j_minus = tour[i - 1];
                 short l = tour[k];
-                short l_plus = tour[(k+1) % n];
+                short l_plus = tour[(k + 1) % n];
 
-
-                double old_dist = distance(j_minus, j)+distance(l, l_plus);
-                double new_dist = distance(j_minus, l)+distance(j, l_plus);
-                if(new_dist < old_dist){
-                    return twoOptSwap(tour, i, k);
+                double old_dist = distance(j_minus, j) + distance(l, l_plus);
+                double new_dist = distance(j_minus, l) + distance(j, l_plus);
+                if (new_dist < old_dist) {
+                    twoOptSwap(tour, i, k);
+                    return true;
                 }
-//                short[] newTour = twoOptSwap(tour, i, k);
-//                newDistance = tourDistance(newTour);
-//                if (newDistance < bestDistance)
-//                    return newTour;
             }
         }
-        return null;
+        return false;
     }
 
-    static short[] twoOptSwap(short[] tour, int swapStart, int swapEnd) {
-        short[] newTour = new short[tour.length];
-        for (int i = 0; i < swapStart; i++) {
-            newTour[i] = tour[i];
+    static void twoOptSwap(short[] tour, int x, int y) {
+        short tmp;
+        while (y > x) {
+            tmp = tour[y];
+            tour[y] = tour[x];
+            tour[x] = tmp;
+            x++;
+            y--;
         }
-        for (int i = swapStart; i <= swapEnd; i++) {
-            newTour[i] = tour[swapStart+swapEnd-i];
-        }
-        for (int i = swapEnd + 1; i < tour.length; i++) {
-            newTour[i] = tour[i];
-        }
-        return newTour;
     }
 
     static short[] greedyTour(int length) {
