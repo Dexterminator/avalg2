@@ -9,7 +9,7 @@ public class Main {
     static double[][] distances;
     static int TIME_LIMIT = 1100;
     static long startTime;
-    static boolean DEBUG = true;
+    static boolean DEBUG = false;
 
     public static void main(String[] args) throws IOException {
         startTime = System.currentTimeMillis();
@@ -52,16 +52,35 @@ public class Main {
     }
 
     static short[] twoOptPass(short[] tour) {
-        double bestDistance = tourDistance(tour);
-        double newDistance;
+        //double bestDistance = tourDistance(tour);
+        //double newDistance;
+        int n = tour.length;
         for (int i = 0; i < tour.length - 1; i++) {
             for (int k = i + 1; k < tour.length; k++) {
                 if (timeLimitPassed())
                     return null;
-                short[] newTour = twoOptSwap(tour, i, k);
-                newDistance = tourDistance(newTour);
-                if (newDistance < bestDistance)
-                    return newTour;
+
+                if(i == 0 && (k+1) == n)
+                    continue;
+                int j_minus;
+                int j = tour[i];
+                if(i == 0)
+                    j_minus = tour[n-1];
+                else
+                    j_minus = tour[i-1];
+                short l = tour[k];
+                short l_plus = tour[(k+1) % n];
+
+
+                double old_dist = distance(j_minus, j)+distance(l, l_plus);
+                double new_dist = distance(j_minus, l)+distance(j, l_plus);
+                if(new_dist < old_dist){
+                    return twoOptSwap(tour, i, k);
+                }
+//                short[] newTour = twoOptSwap(tour, i, k);
+//                newDistance = tourDistance(newTour);
+//                if (newDistance < bestDistance)
+//                    return newTour;
             }
         }
         return null;
