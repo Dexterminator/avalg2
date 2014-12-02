@@ -56,18 +56,18 @@ public class Main {
 
                 if (i == 0 && (k + 1) == n)
                     continue;
-                int j_minus;
+                int jMinus;
                 int j = tour[i];
                 if (i == 0)
-                    j_minus = tour[n - 1];
+                    jMinus = tour[n - 1];
                 else
-                    j_minus = tour[i - 1];
+                    jMinus = tour[i - 1];
                 short l = tour[k];
-                short l_plus = tour[(k + 1) % n];
+                short lPlus = tour[(k + 1) % n];
 
-                double old_dist = distance(j_minus, j) + distance(l, l_plus);
-                double new_dist = distance(j_minus, l) + distance(j, l_plus);
-                if (new_dist < old_dist) {
+                double oldDist = distance(jMinus, j) + distance(l, lPlus);
+                double newDist = distance(jMinus, l) + distance(j, lPlus);
+                if (newDist < oldDist) {
                     twoOptSwap(tour, i, k);
                     return true;
                 }
