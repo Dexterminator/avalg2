@@ -6,7 +6,7 @@ import java.io.IOException;
 public class Main {
     static Kattio io;
     static double[][] distances;
-    static int TIME_LIMIT = 900;
+    static int TIME_LIMIT = 1100;
     static long startTime;
     static boolean DEBUG = false;
 
@@ -42,7 +42,7 @@ public class Main {
         while (foundBetterTour) {
             if (timeLimitPassed())
                 return tour;
-            foundBetterTour = twoOptPass(tour);
+            foundBetterTour = twoOptPassTryAll(tour);
         }
         return tour;
     }
@@ -74,6 +74,40 @@ public class Main {
             }
         }
         return false;
+    }
+
+    static boolean twoOptPassTryAll(short[] tour) {
+        int n = tour.length;
+        int mini = 0;
+        int mink = 0;
+        boolean foundBetterPath = false;
+        for (int i = 0; i < tour.length - 1; i++) {
+            for (int k = i + 1; k < tour.length; k++) {
+                if (timeLimitPassed())
+                    return false;
+                if (i == 0 && (k + 1) == n)
+                    continue;
+                int jMinus;
+                int j = tour[i];
+                if (i == 0)
+                    jMinus = tour[n - 1];
+                else
+                    jMinus = tour[i - 1];
+                short l = tour[k];
+                short lPlus = tour[(k + 1) % n];
+
+                double oldDist = distance(jMinus, j) + distance(l, lPlus);
+                double newDist = distance(jMinus, l) + distance(j, lPlus);
+                if (newDist < oldDist) {
+                    mini = i;
+                    mink = k;
+                    foundBetterPath = true;
+                }
+            }
+        }
+        if (foundBetterPath)
+            twoOptSwap(tour, mini, mink);
+        return foundBetterPath;
     }
 
     static void twoOptSwap(short[] tour, int x, int y) {
