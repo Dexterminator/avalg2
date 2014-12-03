@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Random;
 
 /**
@@ -7,14 +8,16 @@ import java.util.Random;
 public class Main {
     static Kattio io;
     static double[][] distances;
-    static int TIME_LIMIT = 1100;
+    static int TIME_LIMIT = 1500;
     static long startTime;
     static boolean DEBUG = false;
+    private static Random random;
 
     public static void main(String[] args) throws IOException {
         if (args.length > 0)
             DEBUG = Boolean.parseBoolean(args[0]);
         startTime = System.currentTimeMillis();
+        random = new Random();
         // Setup
         io = new Kattio(System.in, System.out);
         int pointsCount = io.getInt();
@@ -23,18 +26,21 @@ public class Main {
 
         // Greedy
         short[] greedyTour = randomStartGreedyTour(pointsCount);
+        double greedyTourDistance = -1;
         if (DEBUG) {
-            for (short i : greedyTour)
-                System.out.println(i);
-            System.out.println("Greedy distance: " + tourDistance(greedyTour));
+            greedyTourDistance = tourDistance(greedyTour);
         }
 
         // 2-opt
-        short[] twoOptTour = twoOpt(greedyTour);
-        for (short i : twoOptTour)
+//        short[] twoOptTour = twoOpt(greedyTour);
+//        short[] shuffledTour = shuffledTour(twoOptTour);
+//        twoOpt(shuffledTour);
+        for (short i : greedyTour)
             System.out.println(i);
         if (DEBUG) {
-            System.err.println("2-opt distance: " + tourDistance(twoOptTour));
+            System.out.println("Greedy distance: " + greedyTourDistance);
+//            System.err.println("2-opt distance: " + tourDistance(twoOptTour));
+            System.out.println("Time taken: "  + (System.currentTimeMillis() - startTime));
         }
     }
 
@@ -143,10 +149,23 @@ public class Main {
         return tour;
     }
 
+    static short[] shuffledTour(short[] tour) {
+        short[] shuffledTour = Arrays.copyOf(tour, tour.length);
+        for (int i = 0; i < 20; i++) {
+            int index1 = random.nextInt(tour.length);
+            int index2 = random.nextInt(tour.length);
+            short tmp = tour[index1];
+            shuffledTour[index1] = tour[index2];
+            shuffledTour[index2] = tmp;
+        }
+        return shuffledTour;
+    }
+
     static short[] randomStartGreedyTour(int length) {
         short[] tour = new short[length];
         boolean[] used = new boolean[tour.length];
-        short first = (short) new Random().nextInt(length);
+
+        short first = (short) random.nextInt(length);
         tour[0] = first;
         used[first] = true;
         for (int i = 1; i < tour.length; i++) {
