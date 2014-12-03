@@ -1,20 +1,18 @@
+import java.awt.geom.Point2D;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Random;
-import java.util.HashMap;
 
 /**
  * Created by dexter on 24/11/14.
  */
 public class Main {
     static Kattio io;
-    static double[][] distances;
+    static int[][] distances;
     static int TIME_LIMIT = 1500;
     static long startTime;
     static boolean DEBUG = false;
     private static Random random;
-    //static HashMap<Integer, Neighbor[]> neighborList;
-
     static int numNeighbors = 20;
 
     private static class Neighbor implements Comparable<Neighbor>{
@@ -39,7 +37,6 @@ public class Main {
         public String toString(){
             return this.index+"="+distance;
         }
-
     }
 
     public static void main(String[] args) throws IOException {
@@ -50,27 +47,23 @@ public class Main {
         // Setup
         io = new Kattio(System.in, System.out);
         int pointsCount = io.getInt();
-        double[][] coordinates = readCoordinates(pointsCount);
+        Point2D.Double[] coordinates = readCoordinates(pointsCount);
         calculateDistances(pointsCount, coordinates);
 
         // Greedy
-        short[] greedyTour = randomStartGreedyTour(pointsCount);
-        double greedyTourDistance = -1;
+        long greedyTime = System.currentTimeMillis();
+        short[] greedyTour = greedyTour(pointsCount);
+        int greedyTourDistance = -1;
         if (DEBUG) {
+            System.out.println("Greedy time: " + (System.currentTimeMillis() - greedyTime));
             greedyTourDistance = tourDistance(greedyTour);
         }
 
         // 2-opt
-//        short[] twoOptTour = twoOpt(greedyTour);
+        short[] twoOptTour = twoOpt(greedyTour);
 //        short[] shuffledTour = shuffledTour(twoOptTour);
 //        twoOpt(shuffledTour);
-        /*
-        if(DEBUG) {
-            for(int i = 0; i < neighborList.size(); i++){
-                System.out.println(i + ": " + Arrays.toString(neighborList.get(i)));
-            }
-        }*/
-        short[] twoOptTour = twoOpt(greedyTour);
+//        short[] twoOptTour = twoOpt(greedyTour);
         for (short i : twoOptTour)
             System.out.println(i);
         if (DEBUG) {
@@ -79,24 +72,6 @@ public class Main {
             System.out.println("Time taken: "  + (System.currentTimeMillis() - startTime));
         }
     }
-    /*
-    static short[] testOpt(short[] tour){
-        for(int i = 0; i < 20; i++){
-            twoOptPass(tour);
-        }
-        short[] newTour;
-        for(int i = 0; i < 7; i++){
-            newTour = shuffledTour(tour);
-        }
-        boolean foundBetterTour = true;
-        while (foundBetterTour) {
-            if (timeLimitPassed())
-                return tour;
-            foundBetterTour = twoOptPass(tour);
-        }
-        return tour;
-    }
-    */
 
     static short[] twoOpt(short[] tour) {
         boolean foundBetterTour = twoOptPass(tour);
@@ -214,40 +189,12 @@ public class Main {
 
     static void twoOptSwap(short[] tour, int x, int y) {
         short tmp;
-        if((y-x) < tour.length/2)
-            while (y > x) {
-                tmp = tour[y];
-                tour[y] = tour[x];
-                tour[x] = tmp;
-                x++;
-                y--;
-            }
-        else{
-            int i = 0;
-            int j = x-1;
-            short[] temp1 = new short[x];
-            while(j>i){
-                temp1[j] = tour[i];
-                temp1[i] = tour[j];
-                i++;
-                j--;
-            }
-            i = 0;
-            short[] temp2 = new short[tour.length-y];
-            j = temp2.length-1;
-            while(j >i){
-                tmp = tour[j];
-                temp2[j] = tour[i];
-                temp2[i] = tmp;
-                i++;
-                j--;
-            }
-            for(int k = 0; k < temp1.length; k++){
-                tour[k] = temp1[k];
-            }
-            for(int l = 0; l < temp2.length; l++){
-                tour[l] = temp2[l];
-            }
+        while (y > x) {
+            tmp = tour[y];
+            tour[y] = tour[x];
+            tour[x] = tmp;
+            x++;
+            y--;
         }
     }
 
@@ -316,8 +263,28 @@ public class Main {
         }
         return tour;
     }
-    private static double tourDistance(short[] tour) {
-        double length = 0.0;
+
+//    static short[] ultimateGreedy(int length) {
+//        short[] tour = new short[length];
+//        boolean[] used = new boolean[tour.length];
+//        short first = (short) random.nextInt(length);
+//        tour[0] = first;
+//        used[first] = true;
+//        for (int i = 1; i < tour.length; i++) {
+//            for (Neighbor neighbor : neighborLists[tour[i]]) {
+//                short j = (short) neighbor.index;
+//                if (!used[j]) {
+//                    tour[i] = j;
+//                    used[j] = true;
+//                    break;
+//                }
+//            }
+//        }
+//        return tour;
+//    }
+
+    private static int tourDistance(short[] tour) {
+        int length = 0;
         for (int i = 1; i < tour.length; i++) {
             length += distance(tour[i-1], tour[i]);
         }
@@ -329,43 +296,22 @@ public class Main {
         return distances[i][j];
     }
 
-    private static void calculateDistances(int pointsCount, double[][] coordinates) {
-        distances = new double[pointsCount][pointsCount];
-        if(numNeighbors > pointsCount){
-            numNeighbors = pointsCount;
-        }
-        //neighborList = new HashMap<Integer, Neighbor[]>(coordinates.length);
-        for (int i = 0; i < pointsCount; i++) {
-            //for (int j = 0; j < pointsCount; j++) {
-            for (int j = 0; j < i; j++) {
-                distances[i][j] = coordinateDistance(coordinates[i], coordinates[j]);
-                distances[j][i] = distances[i][j];
+    private static void calculateDistances(int pointsCount, Point2D.Double[] coordinates) {
+        distances = new int[pointsCount][pointsCount];
+        for(int i = 0; i < pointsCount; i++) {
+            for(int j = 0; j <= i; j++) {
+                int dist = (int) Math.round(coordinates[i].distance(coordinates[j]));
+                distances[i][j] = dist;
+                distances[j][i] = dist;
             }
-            /*
-            double[] neighborDistances = distances[i];
-            // Create neighborlist
-            Neighbor[] neighbors = new Neighbor[pointsCount];
-            for(int j = 0; j < neighborDistances.length; j++){
-                neighbors[j] = new Neighbor(j, neighborDistances[j]);
-            }
-            Arrays.sort(neighbors);
-            neighborList.put(i, Arrays.copyOfRange(neighbors, 0, numNeighbors));
-            */
         }
     }
 
-    static double coordinateDistance(double[] coordinate1, double[] coordinate2) {
-        double paren1 = Math.pow(coordinate1[0] - coordinate2[0], 2);
-        double paren2 = Math.pow(coordinate1[1] - coordinate2[1], 2);
-        double distance = Math.sqrt(paren1 + paren2);
-        return distance;
-    }
-
-    private static double[][] readCoordinates(int pointsCount) {
-        double[][] coordinates = new double[pointsCount][2];
+    private static Point2D.Double[] readCoordinates(int pointsCount) {
+        Point2D.Double[] coordinates = new Point2D.Double[pointsCount];
         for (int i = 0; i < pointsCount; i++) {
-            coordinates[i][0] = io.getDouble();
-            coordinates[i][1] = io.getDouble();
+            Point2D.Double point = new Point2D.Double(io.getDouble(), io.getDouble());
+            coordinates[i] = point;
         }
         return coordinates;
     }
