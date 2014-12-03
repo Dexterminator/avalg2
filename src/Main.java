@@ -13,7 +13,7 @@ public class Main {
     static long startTime;
     static boolean DEBUG = false;
     private static Random random;
-    static HashMap<Integer, Neighbor[]> neighborList;
+    //static HashMap<Integer, Neighbor[]> neighborList;
 
     static int numNeighbors = 20;
 
@@ -64,27 +64,46 @@ public class Main {
 //        short[] twoOptTour = twoOpt(greedyTour);
 //        short[] shuffledTour = shuffledTour(twoOptTour);
 //        twoOpt(shuffledTour);
+        /*
         if(DEBUG) {
             for(int i = 0; i < neighborList.size(); i++){
                 System.out.println(i + ": " + Arrays.toString(neighborList.get(i)));
             }
-        }
+        }*/
         short[] twoOptTour = twoOpt(greedyTour);
         for (short i : twoOptTour)
             System.out.println(i);
         if (DEBUG) {
             System.out.println("Greedy distance: " + greedyTourDistance);
-//            System.err.println("2-opt distance: " + tourDistance(twoOptTour));
+            System.err.println("2-opt distance: " + tourDistance(twoOptTour));
             System.out.println("Time taken: "  + (System.currentTimeMillis() - startTime));
         }
     }
-
-    static short[] twoOpt(short[] tour) {
-        boolean foundBetterTour = twoOptOnlyNearest(tour);
+    /*
+    static short[] testOpt(short[] tour){
+        for(int i = 0; i < 20; i++){
+            twoOptPass(tour);
+        }
+        short[] newTour;
+        for(int i = 0; i < 7; i++){
+            newTour = shuffledTour(tour);
+        }
+        boolean foundBetterTour = true;
         while (foundBetterTour) {
             if (timeLimitPassed())
                 return tour;
-            foundBetterTour = twoOptOnlyNearest(tour);
+            foundBetterTour = twoOptPass(tour);
+        }
+        return tour;
+    }
+    */
+
+    static short[] twoOpt(short[] tour) {
+        boolean foundBetterTour = twoOptPass(tour);
+        while (foundBetterTour) {
+            if (timeLimitPassed())
+                return tour;
+            foundBetterTour = twoOptPass(tour);
         }
         return tour;
     }
@@ -106,6 +125,8 @@ public class Main {
                     jMinus = tour[i - 1];
                 short l = tour[k];
                 short lPlus = tour[(k + 1) % n];
+                if(j == l)
+                    continue;
 
                 double oldDist = distance(jMinus, j) + distance(l, lPlus);
                 double newDist = distance(jMinus, l) + distance(j, lPlus);
@@ -117,7 +138,7 @@ public class Main {
         }
         return false;
     }
-
+    /*
     static boolean twoOptOnlyNearest(short[] tour){
         int n = tour.length;
         for (int i = 0; i < tour.length - 1; i++) {
@@ -153,6 +174,7 @@ public class Main {
         }
         return false;
     }
+    */
 
     static boolean twoOptPassTryAll(short[] tour) {
         int n = tour.length;
@@ -172,6 +194,8 @@ public class Main {
                 else
                     jMinus = tour[i - 1];
                 short l = tour[k];
+                if(j == l)
+                    continue;
                 short lPlus = tour[(k + 1) % n];
 
                 double oldDist = distance(jMinus, j) + distance(l, lPlus);
@@ -190,23 +214,40 @@ public class Main {
 
     static void twoOptSwap(short[] tour, int x, int y) {
         short tmp;
-        while (y > x) {
-            tmp = tour[y];
-            tour[y] = tour[x];
-            tour[x] = tmp;
-            x++;
-            y--;
-        }
-    }
-
-    static void twoOptSwapNearest(short[] tour, int x, int y){
-        short tmp;
-        while (y > x) {
-            tmp = tour[y];
-            tour[y] = tour[x];
-            tour[x] = tmp;
-            x++;
-            y--;
+        if((y-x) < tour.length/2)
+            while (y > x) {
+                tmp = tour[y];
+                tour[y] = tour[x];
+                tour[x] = tmp;
+                x++;
+                y--;
+            }
+        else{
+            int i = 0;
+            int j = x-1;
+            short[] temp1 = new short[x];
+            while(j>i){
+                temp1[j] = tour[i];
+                temp1[i] = tour[j];
+                i++;
+                j--;
+            }
+            i = 0;
+            short[] temp2 = new short[tour.length-y];
+            j = temp2.length-1;
+            while(j >i){
+                tmp = tour[j];
+                temp2[j] = tour[i];
+                temp2[i] = tmp;
+                i++;
+                j--;
+            }
+            for(int k = 0; k < temp1.length; k++){
+                tour[k] = temp1[k];
+            }
+            for(int l = 0; l < temp2.length; l++){
+                tour[l] = temp2[l];
+            }
         }
     }
 
@@ -242,6 +283,16 @@ public class Main {
         }
         return shuffledTour;
     }
+
+    static short[] newShuffledTour(short[] tour) {
+        short[] shuffledTour = Arrays.copyOf(tour, tour.length);
+        int index1 = random.nextInt(tour.length);
+        int index2 = random.nextInt(tour.length);
+
+        twoOptSwap(shuffledTour, index1, index2);
+        return shuffledTour;
+    }
+
 
     static short[] randomStartGreedyTour(int length) {
         short[] tour = new short[length];
@@ -283,13 +334,14 @@ public class Main {
         if(numNeighbors > pointsCount){
             numNeighbors = pointsCount;
         }
-        neighborList = new HashMap<Integer, Neighbor[]>(coordinates.length);
+        //neighborList = new HashMap<Integer, Neighbor[]>(coordinates.length);
         for (int i = 0; i < pointsCount; i++) {
-            for (int j = 0; j < pointsCount; j++) {
-            //for (int j = 0; j < i; j++) {
+            //for (int j = 0; j < pointsCount; j++) {
+            for (int j = 0; j < i; j++) {
                 distances[i][j] = coordinateDistance(coordinates[i], coordinates[j]);
-                //distances[j][i] = distances[i][j];
+                distances[j][i] = distances[i][j];
             }
+            /*
             double[] neighborDistances = distances[i];
             // Create neighborlist
             Neighbor[] neighbors = new Neighbor[pointsCount];
@@ -298,6 +350,7 @@ public class Main {
             }
             Arrays.sort(neighbors);
             neighborList.put(i, Arrays.copyOfRange(neighbors, 0, numNeighbors));
+            */
         }
     }
 
