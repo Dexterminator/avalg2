@@ -60,7 +60,7 @@ public class Main {
         }
 
         // 2-opt
-        short[] twoOptTour = twoOpt(greedyTour);
+        //short[] twoOptTour = twoOpt(greedyTour);
 //        short[] shuffledTour = shuffledTour(twoOptTour);
 //        twoOpt(shuffledTour);
         /*
@@ -69,6 +69,16 @@ public class Main {
                 System.out.println(i + ": " + Arrays.toString(neighborList.get(i)));
             }
         }*/
+        short[] twoOptTour = new short[pointsCount];
+        while(!timeLimitPassed()){
+            twoOptTour = twoOpt(greedyTour, 50);
+            twoOptTour = twoOpt(greedyTour, 30);
+            twoOptTour = twoOpt(greedyTour, 0);
+
+
+        }
+
+
         for (short i : twoOptTour)
             System.out.println(i);
         if (DEBUG) {
@@ -77,14 +87,37 @@ public class Main {
             System.out.println("Time taken: "  + (System.currentTimeMillis() - startTime));
         }
     }
+    /*
+    static short[] testOpt(short[] tour){
+        short[] bestTour;
+        for(int i = 0; i < 17; i++){
+            twoOptPass(tour);
+        }
+        bestTour = tour;
+        short[] newTour = new short[tour.length];
+        newTour = shuffledTour(tour);
+        boolean foundBetterTour = true;
+        while (foundBetterTour) {
+            if (timeLimitPassed())
+                return tour;
+            foundBetterTour = twoOptPass(newTour);
+            if(tourDistance(newTour) < tourDistance(bestTour)){
+                bestTour = newTour;
+                System.out.println("swag");
+            }
+        }
+        return bestTour;
+    }
+    */
 
-    static short[] twoOpt(short[] tour) {
-        boolean foundBetterTour = twoOptPass(tour);
+
+    static short[] twoOpt(short[] tour, int limit) {
+        boolean foundBetterTour = twoOptPass(tour, limit);
         int i = 0;
         while (foundBetterTour) {
             if (timeLimitPassed())
                 return tour;
-            foundBetterTour = twoOptPass(tour);
+            foundBetterTour = twoOptPass(tour, limit);
             i++;
         }
         if(DEBUG)
@@ -92,7 +125,7 @@ public class Main {
         return tour;
     }
 
-    static boolean twoOptPass(short[] tour) {
+    static boolean twoOptPass(short[] tour, int limit) {
         int n = tour.length;
         for (int i = 0; i < tour.length - 1; i++) {
             for (int k = i + 1; k < tour.length; k++) {
@@ -114,7 +147,7 @@ public class Main {
 
                 double oldDist = distance(jMinus, j) + distance(l, lPlus);
                 double newDist = distance(jMinus, l) + distance(j, lPlus);
-                if (newDist < oldDist) {
+                if ((oldDist-limit) > newDist) {
                     twoOptSwap(tour, i, k);
                     return true;
                 }
@@ -201,12 +234,16 @@ public class Main {
         if((y-x) > tour.length /2)
             reverse(tour, x, y);
         else{
+            /*
+            Reverse the compliment if this takes less time. Such optimization.
+             */
             int i = 0;
             int j = x-1;
             short[] temp1 = Arrays.copyOfRange(tour, 0, x);
             reverse(temp1, i, j);
             short[] temp2 = Arrays.copyOfRange(tour, x, y+1);
             i = 0;
+
             short[] temp3 = Arrays.copyOfRange(tour, y+1, tour.length);
             j = temp3.length-1;
             reverse(temp3, i, j);
@@ -268,6 +305,7 @@ public class Main {
             short tmp = tour[index1];
             shuffledTour[index1] = tour[index2];
             shuffledTour[index2] = tmp;
+            reverse(tour, index1, index2);
         }
         return shuffledTour;
     }
@@ -276,7 +314,9 @@ public class Main {
         short[] shuffledTour = Arrays.copyOf(tour, tour.length);
         int index1 = random.nextInt(tour.length);
         int index2 = random.nextInt(tour.length);
-
+        short temp1 = tour[index1];
+        tour[index1] = tour[index2];
+        tour[index2] = temp1;
         twoOptSwap(shuffledTour, index1, index2);
         return shuffledTour;
     }
