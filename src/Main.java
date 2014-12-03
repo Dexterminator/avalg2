@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.util.Random;
 
 /**
  * Created by dexter on 24/11/14.
@@ -21,7 +22,7 @@ public class Main {
         distances = calculateDistances(pointsCount, coordinates);
 
         // Greedy
-        short[] greedyTour = greedyTour(pointsCount);
+        short[] greedyTour = randomStartGreedyTour(pointsCount);
         if (DEBUG) {
             for (short i : greedyTour)
                 System.out.println(i);
@@ -42,7 +43,7 @@ public class Main {
         while (foundBetterTour) {
             if (timeLimitPassed())
                 return tour;
-            foundBetterTour = twoOptPassTryAll(tour);
+            foundBetterTour = twoOptPass(tour);
         }
         return tour;
     }
@@ -126,6 +127,28 @@ public class Main {
         boolean[] used = new boolean[tour.length];
         tour[0] = 0;
         used[0] = true;
+        for (int i = 1; i < tour.length; i++) {
+            short best = -1;
+            double bestDist = Double.MAX_VALUE;
+            for (short j = 0; j < tour.length; j++) {
+                double currDist = distance(tour[i-1], j);
+                if (!used[j] && (best == -1 || currDist < bestDist)) {
+                    best = j;
+                    bestDist = currDist;
+                }
+            }
+            tour[i] = best;
+            used[best] = true;
+        }
+        return tour;
+    }
+
+    static short[] randomStartGreedyTour(int length) {
+        short[] tour = new short[length];
+        boolean[] used = new boolean[tour.length];
+        short first = (short) new Random().nextInt(length);
+        tour[0] = first;
+        used[first] = true;
         for (int i = 1; i < tour.length; i++) {
             short best = -1;
             double bestDist = Double.MAX_VALUE;
