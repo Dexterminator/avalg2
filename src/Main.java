@@ -9,11 +9,12 @@ import java.util.HashMap;
 public class Main {
     static Kattio io;
     static double[][] distances;
-    static int TIME_LIMIT = 1500;
+    static int TIME_LIMIT = 1400;
     static long startTime;
     static boolean DEBUG = false;
     private static Random random;
     //static HashMap<Integer, Neighbor[]> neighborList;
+
 
     static int numNeighbors = 20;
 
@@ -71,6 +72,7 @@ public class Main {
             }
         }*/
         short[] twoOptTour = twoOpt(greedyTour);
+
         for (short i : twoOptTour)
             System.out.println(i);
         if (DEBUG) {
@@ -100,11 +102,15 @@ public class Main {
 
     static short[] twoOpt(short[] tour) {
         boolean foundBetterTour = twoOptPass(tour);
+        int i = 0;
         while (foundBetterTour) {
             if (timeLimitPassed())
                 return tour;
             foundBetterTour = twoOptPass(tour);
+            i++;
         }
+        if(DEBUG)
+            System.out.println("Iterations: " + i);
         return tour;
     }
 
@@ -214,40 +220,73 @@ public class Main {
 
     static void twoOptSwap(short[] tour, int x, int y) {
         short tmp;
-        if((y-x) < tour.length/2)
+        if((y-x) > tour.length /2)
+            reverse(tour, x, y);
+        /*
             while (y > x) {
                 tmp = tour[y];
                 tour[y] = tour[x];
                 tour[x] = tmp;
                 x++;
                 y--;
+
             }
+            */
         else{
             int i = 0;
             int j = x-1;
-            short[] temp1 = new short[x];
+            short[] temp1 = Arrays.copyOfRange(tour, 0, x);
+            reverse(temp1, i, j);
+
+            short[] temp2 = Arrays.copyOfRange(tour, x, y+1);
+
+            /*
             while(j>i){
                 temp1[j] = tour[i];
                 temp1[i] = tour[j];
                 i++;
                 j--;
             }
+            */
             i = 0;
-            short[] temp2 = new short[tour.length-y];
-            j = temp2.length-1;
+            short[] temp3 = Arrays.copyOfRange(tour, y+1, tour.length);
+            j = temp3.length-1;
+            reverse(temp3, i, j);
+            /*
             while(j >i){
-                tmp = tour[j];
-                temp2[j] = tour[i];
+                tmp = tour[j+y];
+                temp2[j] = tour[i+y];
                 temp2[i] = tmp;
                 i++;
                 j--;
             }
+            */
+            for(int l = 0; l < temp3.length; l++){
+                tour[l] = temp3[l];
+            }
+            int p = 0;
+            for(int k = temp3.length; k < temp3.length+y+1-temp1.length; k++){
+                tour[k] = temp2[p];
+                p++;
+            }
+            p =  y+1+temp3.length-temp1.length;
             for(int k = 0; k < temp1.length; k++){
-                tour[k] = temp1[k];
+                tour[p] = temp1[k];
+                p++;
             }
-            for(int l = 0; l < temp2.length; l++){
-                tour[l] = temp2[l];
-            }
+
+
+        }
+    }
+
+    static void reverse(short[] tour, int x, int y){
+        short tmp;
+        while (y > x) {
+            tmp = tour[y];
+            tour[y] = tour[x];
+            tour[x] = tmp;
+            x++;
+            y--;
         }
     }
 
@@ -292,7 +331,6 @@ public class Main {
         twoOptSwap(shuffledTour, index1, index2);
         return shuffledTour;
     }
-
 
     static short[] randomStartGreedyTour(int length) {
         short[] tour = new short[length];
