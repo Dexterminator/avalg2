@@ -15,29 +15,6 @@ public class Main {
     static List<List<Short>> neighborLists;
     static int numNeighbors = 20;
 
-    private static class Neighbor implements Comparable<Neighbor>{
-        public int index;
-        public double distance;
-
-        public Neighbor(int index, double distance){
-            this.index = index;
-            this.distance = distance;
-        }
-        @Override
-        public int compareTo(Neighbor n){
-            if(this.distance < n.distance)
-                return -1;
-            else if(this.distance > n.distance)
-                return 1;
-            else
-                return 0;
-        }
-
-        @Override
-        public String toString(){
-            return this.index+"="+distance;
-        }
-    }
 
     public static void main(String[] args) throws IOException {
         if (args.length > 0)
@@ -74,6 +51,22 @@ public class Main {
         // 2-opt
 
         short[] twoOptTour = twoOpt(greedyTour);
+        int bestTourlength = tourDistance(twoOptTour);
+        int possibleTourLength;
+
+        while(!timeLimitPassed()){
+            short[] possibleTour = Arrays.copyOf(twoOptTour, twoOptTour.length);
+            ultimateShuffle(possibleTour);
+            twoOpt(possibleTour);
+            possibleTourLength = tourDistance(possibleTour);
+            if(possibleTourLength < bestTourlength){
+                twoOptTour = possibleTour;
+                bestTourlength = possibleTourLength;
+
+            }
+        }
+
+
         printTour(twoOptTour);
         //printTour(twoOptTour);
 
@@ -85,7 +78,7 @@ public class Main {
             */
         if (DEBUG) {
             System.out.println("Greedy distance: " + greedyTourDistance);
-            System.err.println("2-opt distance: " + tourDistance(twoOptTour));
+            System.err.println("2-opt distance: " + bestTourlength);
             System.out.println("Time taken: "  + (System.currentTimeMillis() - startTime));
         }
     }
@@ -93,15 +86,11 @@ public class Main {
     static short[] twoOpt(short[] tour) {
         boolean foundBetterTour = ultimateTwoOptPass(tour);
 
-        int i = 0;
         while (foundBetterTour) {
             if (timeLimitPassed())
                 return tour;
             foundBetterTour = ultimateTwoOptPass(tour);
-            i++;
         }
-        if(DEBUG)
-            System.out.println("Iterations: " + i);
 
         return tour;
     }
@@ -175,6 +164,9 @@ public class Main {
             lastInSmall = tour[lastInSmall];
             smallTour.add(lastInSmall);
         }
+        if(smallTour.size() == 1){
+            return;
+        }
 
         Collections.reverse(smallTour.subList(1, smallTour.size()-1));
 
@@ -183,6 +175,25 @@ public class Main {
             short node2 = smallTour.get(i+1);
             tour[node1] = node2;
         }
+    }
+
+    static void ultimateShuffle(short[] tour){
+        int limit =(int) (3.5 - Math.random());
+        for(int i = 0; i < limit; i++){
+            short edge1node1 = (short) (Math.random() * tour.length);
+            short edge1node2 = tour[edge1node1];
+            short edge2node1 = edge1node1;
+            short edge2node2 = edge1node2;
+            while(edge1node1 == edge2node1 || edge2node1 == edge1node2 ||
+                    edge2node2 == edge1node1 || edge2node2 == edge1node2){
+                edge2node1 = (short) (Math.random() * tour.length);
+                edge2node2 = tour[edge2node1];
+            }
+            ultimateTwoOptSwap(tour, edge1node1, edge2node2);
+
+        }
+
+
     }
 
     /*
