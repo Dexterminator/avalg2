@@ -1,7 +1,6 @@
 import java.awt.geom.Point2D;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Random;
+import java.util.*;
 
 /**
  * Created by dexter on 24/11/14.
@@ -9,11 +8,12 @@ import java.util.Random;
 public class Main {
     static Kattio io;
     static int[][] distances;
-    static int TIME_LIMIT = 1400;
+    static int TIME_LIMIT = 1000;
     static long startTime;
     static boolean DEBUG = false;
     private static Random random;
-    static int numNeighbors = 20;
+    static List<List<Short>> neighborLists;
+    static int numNeighbors = 200;
 
     private static class Neighbor implements Comparable<Neighbor>{
         public int index;
@@ -49,26 +49,24 @@ public class Main {
         int pointsCount = io.getInt();
         Point2D.Double[] coordinates = readCoordinates(pointsCount);
         calculateDistances(pointsCount, coordinates);
+        neighborLists = getNeighbourLists(pointsCount);
 
         // Greedy
         long greedyTime = System.currentTimeMillis();
-        short[] greedyTour = greedyTour(pointsCount);
+        short[] greedyTour = ultimateGreedy(pointsCount);
         int greedyTourDistance = -1;
         if (DEBUG) {
             System.out.println("Greedy time: " + (System.currentTimeMillis() - greedyTime));
             greedyTourDistance = tourDistance(greedyTour);
+            for (short i : greedyTour) {
+                System.out.println(i);
+            }
         }
 
         // 2-opt
         short[] twoOptTour = twoOpt(greedyTour);
 //        short[] shuffledTour = shuffledTour(twoOptTour);
 //        twoOpt(shuffledTour);
-        /*
-        if(DEBUG) {
-            for(int i = 0; i < neighborList.size(); i++){
-                System.out.println(i + ": " + Arrays.toString(neighborList.get(i)));
-            }
-        }*/
         for (short i : twoOptTour)
             System.out.println(i);
         if (DEBUG) {
@@ -115,7 +113,7 @@ public class Main {
                 double oldDist = distance(jMinus, j) + distance(l, lPlus);
                 double newDist = distance(jMinus, l) + distance(j, lPlus);
                 if (newDist < oldDist) {
-                    twoOptSwap(tour, i, k);
+                    reverse(tour, i, k);
                     return true;
                 }
             }
@@ -192,7 +190,7 @@ public class Main {
             }
         }
         if (foundBetterPath)
-            twoOptSwap(tour, mini, mink);
+            reverse(tour, mini, mink);
         return foundBetterPath;
     }
 
@@ -304,24 +302,23 @@ public class Main {
         return tour;
     }
 
-//    static short[] ultimateGreedy(int length) {
-//        short[] tour = new short[length];
-//        boolean[] used = new boolean[tour.length];
-//        short first = (short) random.nextInt(length);
-//        tour[0] = first;
-//        used[first] = true;
-//        for (int i = 1; i < tour.length; i++) {
-//            for (Neighbor neighbor : neighborLists[tour[i]]) {
-//                short j = (short) neighbor.index;
-//                if (!used[j]) {
-//                    tour[i] = j;
-//                    used[j] = true;
-//                    break;
-//                }
-//            }
-//        }
-//        return tour;
-//    }
+    static short[] ultimateGreedy(int length) {
+        short[] tour = new short[length];
+        boolean[] used = new boolean[tour.length];
+        short first = (short) random.nextInt(length);
+        tour[0] = first;
+        used[first] = true;
+        for (int i = 1; i < tour.length; i++) {
+            for (short j : neighborLists.get(tour[i-1])) {
+                if (!used[j]){
+                    tour[i] = j;
+                    used[j] = true;
+                    break;
+                }
+            }
+        }
+        return tour;
+    }
 
     private static int tourDistance(short[] tour) {
         int length = 0;
@@ -332,7 +329,7 @@ public class Main {
         return length;
     }
 
-    private static double distance(int i, int j) {
+    private static int distance(int i, int j) {
         return distances[i][j];
     }
 
@@ -354,6 +351,40 @@ public class Main {
             coordinates[i] = point;
         }
         return coordinates;
+    }
+
+    private static List<List<Short>> getNeighbourLists(int pointsCount) {
+        List<List<Short>> neighborLists = new ArrayList<List<Short>>();
+        for(short i = 0; i < numNeighbors; i++) {
+            NodeComparator comp = new NodeComparator(i);
+            List<Short> neighborList = getUnsortedNeighbors(i);
+            Collections.sort(neighborList, comp);
+            neighborLists.add(neighborList);
+        }
+        return neighborLists;
+    }
+
+    private static List<Short> getUnsortedNeighbors(short node) {
+        List<Short> unsortedNeighbors = new ArrayList<Short>();
+        for (short i = 0; i < distances.length; i++) {
+            if (i == node)
+                continue;
+            unsortedNeighbors.add(i);
+        }
+        return unsortedNeighbors;
+    }
+
+    private static class NodeComparator implements Comparator<Short> {
+        private int node;
+
+        public NodeComparator(int node) {
+            this.node = node;
+        }
+
+        @Override
+        public int compare(Short node1, Short node2) {
+            return distance(node, node1) - distance(node, node2);
+        }
     }
 
     static boolean timeLimitPassed() {
