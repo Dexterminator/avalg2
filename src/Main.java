@@ -1,7 +1,6 @@
 import java.awt.geom.Point2D;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Random;
 
 /**
@@ -15,7 +14,6 @@ public class Main {
     static boolean DEBUG = false;
     private static Random random;
     static int numNeighbors = 20;
-    static HashMap<Integer, Neighbor[]> neighborList = new HashMap<Integer, Neighbor[]>();
 
     private static class Neighbor implements Comparable<Neighbor>{
         public int index;
@@ -114,12 +112,12 @@ public class Main {
 
 
     static short[] twoOpt(short[] tour, int limit) {
-        boolean foundBetterTour = twoOptOnlyNearest(tour, limit);
+        boolean foundBetterTour = twoOptPass(tour, limit);
         int i = 0;
         while (foundBetterTour) {
             if (timeLimitPassed())
                 return tour;
-            foundBetterTour = twoOptOnlyNearest(tour, limit);
+            foundBetterTour = twoOptPass(tour, limit);
             i++;
         }
         if(DEBUG)
@@ -157,41 +155,43 @@ public class Main {
         }
         return false;
     }
-
-    static boolean twoOptOnlyNearest(short[] tour, int limit){
+    /*
+    static boolean twoOptOnlyNearest(short[] tour){
         int n = tour.length;
-        for (int i = 0; i < tour.length; i++) {
-            short current = tour[(i+1) % n];
-            Neighbor[] list = neighborList.get((int) tour[i]);
-            for (int k = 0; k < list.length && k < numNeighbors; k++) {
+        for (int i = 0; i < tour.length - 1; i++) {
+            for (int k = i + 1; k < neighborList.get((int) tour[i]).length ; k++) {
                 if (timeLimitPassed())
                     return false;
-                short neighbor = tour[k];
-                if(neighbor == current)
-                    break;
-                short neighborsNeighbor = tour[(k+1) % n];
-                if(i == (k+1) % n){
-                    continue;
-                }
 
                 if (i == 0 && (k + 1) == n)
                     continue;
+                int jMinus;
+                if (i == 0)
+                    jMinus = tour[n - 1];
+                else
+                    jMinus = tour[i - 1];
                 //int j = tour[i];
+                Neighbor jNeighbor = neighborList.get((int) tour[jMinus])[i];
+                int j = jNeighbor.index;
+                Neighbor lNeighbor = neighborList.get((int) tour[i])[k];
+                Neighbor lPlusNeighbor = neighborList.get((int) tour[i])[(k + 1) % n];
+                int l = lNeighbor.index;
+                int lPlus = lPlusNeighbor.index;
 
-                double oldDist = distance(tour[i], current) + distance(neighbor, neighborsNeighbor);
-                double newDist = distance(tour[i], neighbor) + distance(current, neighborsNeighbor);
-                if ((oldDist-limit) > newDist) {
+                double oldDist = distance(jMinus, j) + distance(l, lPlus);
+                double newDist = distance(jMinus, l) + distance(j, lPlus);
+                if (newDist < oldDist) {
                     twoOptSwap(tour, i, k);
                     //neighborList.get(jMinus)[j] = lNeighbor;
                     //neighborList.get(j)[lPlus] = lPlusNeighbor;
 
-                    break;
+                    return true;
                 }
             }
         }
         return false;
     }
-
+    */
 
     static boolean twoOptPassTryAll(short[] tour) {
         int n = tour.length;
@@ -231,8 +231,7 @@ public class Main {
 
     static void twoOptSwap(short[] tour, int x, int y) {
         short tmp;
-        // TODO: check if x>y is necessary
-        if((y-x) > tour.length /2 || x>y)
+        if((y-x) > tour.length /2)
             reverse(tour, x, y);
         else{
             /*
@@ -242,7 +241,6 @@ public class Main {
             int j = x-1;
             short[] temp1 = Arrays.copyOfRange(tour, 0, x);
             reverse(temp1, i, j);
-            //System.out.println(x + ", " + y);
             short[] temp2 = Arrays.copyOfRange(tour, x, y+1);
             i = 0;
 
@@ -381,20 +379,11 @@ public class Main {
     private static void calculateDistances(int pointsCount, Point2D.Double[] coordinates) {
         distances = new int[pointsCount][pointsCount];
         for(int i = 0; i < pointsCount; i++) {
-            for(int j = 0; j< pointsCount; j++){
-            //for(int j = 0; j <= i; j++) {
-                if(distances[i][j] != 0.0)
-                    continue;
+            for(int j = 0; j <= i; j++) {
                 int dist = (int) Math.round(coordinates[i].distance(coordinates[j]));
                 distances[i][j] = dist;
                 distances[j][i] = dist;
             }
-            Neighbor[] neighbors = new Neighbor[pointsCount];
-            for(int j = 0; j<pointsCount; j++){
-                neighbors[j] = new Neighbor(j, distances[i][j]);
-            }
-            Arrays.sort(neighbors);
-            neighborList.put(i, neighbors);
         }
     }
 
