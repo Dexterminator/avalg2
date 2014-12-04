@@ -13,7 +13,7 @@ public class Main {
     static boolean DEBUG = false;
     private static Random random;
     static List<List<Short>> neighborLists;
-    static int numNeighbors = 200;
+    static int numNeighbors = 20;
 
     private static class Neighbor implements Comparable<Neighbor>{
         public int index;
@@ -47,28 +47,42 @@ public class Main {
         // Setup
         io = new Kattio(System.in, System.out);
         int pointsCount = io.getInt();
+        if(pointsCount <= 3){
+            for (int i = 0; i < 3; i++) {
+                System.out.println(i);
+            }
+            System.exit(0);
+        }
         Point2D.Double[] coordinates = readCoordinates(pointsCount);
         calculateDistances(pointsCount, coordinates);
         neighborLists = getNeighbourLists(pointsCount);
 
         // Greedy
-        long greedyTime = System.currentTimeMillis();
+//        long greedyTime = System.currentTimeMillis();
         short[] greedyTour = ultimateGreedy(pointsCount);
         int greedyTourDistance = -1;
         if (DEBUG) {
-            System.out.println("Greedy time: " + (System.currentTimeMillis() - greedyTime));
+//            System.out.println("Greedy time: " + (System.currentTimeMillis() - greedyTime));
             greedyTourDistance = tourDistance(greedyTour);
+            /*
             for (short i : greedyTour) {
                 System.out.println(i);
-            }
+            }*/
+
         }
 
         // 2-opt
+
         short[] twoOptTour = twoOpt(greedyTour);
+        printTour(twoOptTour);
+        //printTour(twoOptTour);
+
+        /*
 //        short[] shuffledTour = shuffledTour(twoOptTour);
 //        twoOpt(shuffledTour);
         for (short i : twoOptTour)
             System.out.println(i);
+            */
         if (DEBUG) {
             System.out.println("Greedy distance: " + greedyTourDistance);
             System.err.println("2-opt distance: " + tourDistance(twoOptTour));
@@ -77,16 +91,18 @@ public class Main {
     }
 
     static short[] twoOpt(short[] tour) {
-        boolean foundBetterTour = twoOptPass(tour);
+        boolean foundBetterTour = ultimateTwoOptPass(tour);
+
         int i = 0;
         while (foundBetterTour) {
             if (timeLimitPassed())
                 return tour;
-            foundBetterTour = twoOptPass(tour);
+            foundBetterTour = ultimateTwoOptPass(tour);
             i++;
         }
         if(DEBUG)
             System.out.println("Iterations: " + i);
+
         return tour;
     }
 
@@ -120,6 +136,55 @@ public class Main {
         }
         return false;
     }
+
+    static boolean ultimateTwoOptPass(short[] tour) {
+        int n = tour.length;
+        for (short curr = 0; curr < n; curr++) {
+            List<Short> neighborList = neighborLists.get(curr);
+            short currNeighbor = tour[curr];
+            if(timeLimitPassed())
+                return false;
+            for (short j = 0; j < numNeighbors; j++) {
+                short newNeighbor = neighborList.get(j);
+                if(currNeighbor == newNeighbor)
+                    break;
+                short newNeighborsNeighbor = tour[newNeighbor];
+                if(currNeighbor == newNeighborsNeighbor)
+                    continue;
+
+                int oldDist = distance(curr, currNeighbor) + distance(newNeighbor, newNeighborsNeighbor);
+                int newDist = distance(curr, newNeighbor) + distance(currNeighbor, newNeighborsNeighbor);
+                if (newDist < oldDist){
+                    ultimateTwoOptSwap(tour, curr, newNeighbor);
+                    return true;
+                }
+
+            }
+
+        }
+        return false;
+    }
+
+    static void ultimateTwoOptSwap(short[] tour, short currentNode, short newNeighbor){
+        short neighborsNeighbor = tour[newNeighbor];
+        List<Short> smallTour = new ArrayList<Short>();
+        smallTour.add(currentNode);
+
+        short lastInSmall = currentNode;
+        while(lastInSmall != neighborsNeighbor){
+            lastInSmall = tour[lastInSmall];
+            smallTour.add(lastInSmall);
+        }
+
+        Collections.reverse(smallTour.subList(1, smallTour.size()-1));
+
+        for(int i = 0; i < smallTour.size()-1; i++){
+            short node1 = smallTour.get(i);
+            short node2 = smallTour.get(i+1);
+            tour[node1] = node2;
+        }
+    }
+
     /*
     static boolean twoOptOnlyNearest(short[] tour){
         int n = tour.length;
@@ -306,27 +371,58 @@ public class Main {
         short[] tour = new short[length];
         boolean[] used = new boolean[tour.length];
         short first = (short) random.nextInt(length);
-        tour[0] = first;
         used[first] = true;
-        for (int i = 1; i < tour.length; i++) {
-            for (short j : neighborLists.get(tour[i-1])) {
-                if (!used[j]){
-                    tour[i] = j;
-                    used[j] = true;
+        short current = neighborLists.get(first).get(0);
+        tour[first] = current;
+        used[current] = true;
+        for(int i = 0; i < tour.length-1; i++) {
+            List<Short> neighborList = neighborLists.get(current);
+            for (short neighbor : neighborList) {
+                if (!used[neighbor]) {
+                    tour[current] = neighbor;
+                    used[neighbor] = true;
+                    current = neighbor;
                     break;
                 }
             }
         }
+        // Close the tour manually
+        tour[current] = first;
+
         return tour;
     }
 
     private static int tourDistance(short[] tour) {
         int length = 0;
+
+
+        for (int i = 0; i < tour.length; i++) {
+            length += distance(i, tour[i]);
+
+        }
+        /*
+        while(current != first){
+            length += distance(current, previous);
+            previous = current;
+            current = tour[current];
+        }
+        */
+        /*
         for (int i = 1; i < tour.length; i++) {
             length += distance(tour[i-1], tour[i]);
-        }
-        length += distance(tour[0], tour[tour.length-1]);
+        }*/
+        //length += distance(current, first);
         return length;
+    }
+
+    static void printTour(short[] tour) {
+        short first = tour[0];
+        short current = tour[first];
+        for (int i = 0; i < tour.length; i++) {
+            io.println(current);
+            current = tour[current];
+        }
+        io.flush();
     }
 
     private static int distance(int i, int j) {
@@ -355,7 +451,7 @@ public class Main {
 
     private static List<List<Short>> getNeighbourLists(int pointsCount) {
         List<List<Short>> neighborLists = new ArrayList<List<Short>>();
-        for(short i = 0; i < numNeighbors; i++) {
+        for(short i = 0; i < pointsCount; i++) {
             NodeComparator comp = new NodeComparator(i);
             List<Short> neighborList = getUnsortedNeighbors(i);
             Collections.sort(neighborList, comp);
