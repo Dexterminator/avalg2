@@ -13,8 +13,7 @@ public class Main {
     static boolean DEBUG = false;
     private static Random random;
     static List<List<Short>> neighborLists;
-    static int numNeighbors = 20;
-
+    static int numNeighbors = 200;
 
     public static void main(String[] args) throws IOException {
         if (args.length > 0)
@@ -178,8 +177,7 @@ public class Main {
     }
 
     static void ultimateShuffle(short[] tour){
-        int limit =(int) (3.5 - Math.random());
-        for(int i = 0; i < limit; i++){
+        for(int i = 0; i < 2; i++){
             short edge1node1 = (short) (Math.random() * tour.length);
             short edge1node2 = tour[edge1node1];
             short edge2node1 = edge1node1;
@@ -192,8 +190,6 @@ public class Main {
             ultimateTwoOptSwap(tour, edge1node1, edge2node2);
 
         }
-
-
     }
 
     /*
